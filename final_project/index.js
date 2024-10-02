@@ -10,9 +10,29 @@ app.use(express.json());
 
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
-app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+// Authentication middleware
+app.use("/customer/auth/*", function auth(req, res, next) {
+    // Check if the user is authenticated
+    const token = req.headers['authorization'];
+
+    if (!token) {
+        // No token provided, unauthorized access
+        return res.status(401).json({ message: "Unauthorized access, please provide a valid token" });
+    }
+
+    // Verify the token (assuming JWT)
+    jwt.verify(token, "your-secret-key", (err, decoded) => {
+        if (err) {
+            // Invalid token
+            return res.status(403).json({ message: "Forbidden, invalid token" });
+        }
+
+        // Token is valid, store user info for future use
+        req.user = decoded;
+        next(); // Continue to the next middleware or route
+    });
 });
+
  
 const PORT =5000;
 
